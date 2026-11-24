@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hadhar: try it</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#e2e8f0; --mut:#94a3b8; --acc:#38bdf8;
+          --red:#ef4444; --amber:#f59e0b; --green:#22c55e; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--txt); font:16px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,"Noto Sans Arabic","Geeza Pro",sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:28px 16px 48px; }
+  h1 { font-size:22px; margin:0 0 4px } h1 small { color:var(--acc); font-weight:600; font-size:14px; letter-spacing:.06em; display:block }
+  p.sub { color:var(--mut); margin:0 0 20px }
+  textarea { width:100%; min-height:120px; resize:vertical; background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:12px; padding:14px; font:inherit }
+  textarea:focus, button:focus-visible { outline:2px solid var(--acc); outline-offset:2px }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 14px }
+  .chip { background:transparent; color:var(--mut); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font:inherit; font-size:13px; cursor:pointer }
+  .chip:hover { color:var(--txt); border-color:var(--mut) }
+  .go { background:var(--acc); color:#04283a; border:0; border-radius:10px; padding:11px 22px; font:inherit; font-weight:700; cursor:pointer }
+  .go[disabled] { opacity:.6; cursor:wait }
+  #out { margin-top:22px }
+  .verdict { border-radius:14px; padding:16px 18px; border:1px solid var(--line); background:var(--card); border-inline-start:6px solid var(--mut) }
+  .verdict.red { border-inline-start-color:var(--red) } .verdict.amber { border-inline-start-color:var(--amber) } .verdict.green { border-inline-start-color:var(--green) }
+  .verdict h2 { margin:0; font-size:19px } .verdict .score { color:var(--mut); font-weight:400; font-size:14px }
+  h3 { font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); margin:18px 0 6px }
+  ul { margin:0; padding-inline-start:20px } li { margin:4px 0 }
+  .w { color:var(--mut); font-size:13px }
+  .links { font-size:14px; color:var(--mut) } .links code { color:var(--txt); word-break:break-all }
+  .err { color:#fecaca; background:#450a0a; border:1px solid #7f1d1d; border-radius:12px; padding:14px }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap }
+  label.l { color:var(--mut); font-size:13px }
+  .lang { background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:6px 8px; font:inherit; font-size:13px }
+</style>
+</head>
+<body>
+<main>
+  <h1><small>HADHAR · حذار</small>Is this a scam?</h1>
+  <p class="sub">Paste a suspicious message or link. It is checked by your local n8n workflow.</p>
+
+  <textarea id="msg" dir="auto" placeholder="Paste a message here…"></textarea>
+  <div class="chips" id="chips"></div>
+  <div class="row">
+    <button class="go" id="go">Check it</button>
+    <label class="l">Answer in
+      <select class="lang" id="lang"><option value="">same language as the message</option><option value="ar">العربية</option><option value="en">English</option></select>
+    </label>
+  </div>
+
+  <div id="out" aria-live="polite"></div>
+  <p class="w" style="margin-top:28px">Sent to <code id="url"></code> only. Nothing leaves your machine except the link lookups the workflow makes (domain age, phishing blocklist).</p>
+</main>
+<script>
+const params = new URLSearchParams(location.search);
+const ENDPOINT = params.get('endpoint') || 'http://localhost:5678/webhook/check';
+document.getElementById('url').textContent = ENDPOINT;
+
+const EXAMPLES = [
+  ['Phishing (EN)', 'Your PayPal account has been suspended. Verify within 24 hours: http://paypal-secure.top/login'],
+  ['Delivery fee (AR)', 'شحنتك معلقة في الجمارك. سدد رسوم التوصيل 15 ريال خلال 24 ساعة: aramex-pay.click/track'],
+  ['"Hi mum" (EN)', "Hi mum, I lost my phone and this is my new number. Can you send me money for rent? It's urgent"],
+  ['Bank code (AR)', 'عزيزي العميل، لتجنب إيقاف بطاقتك أرسل رمز التحقق الذي وصلك الآن'],
+  ['Real OTP (EN)', 'Your verification code is 482913. Do not share it with anyone.'],
+  ['Normal chat', 'See you at 8 for dinner, I booked the table'],
+];
+const chips = document.getElementById('chips');
+for (const [label, text] of EXAMPLES) {
+  const b = document.createElement('button'); b.className = 'chip'; b.type = 'button'; b.textContent = label;
+  b.onclick = () => { document.getElementById('msg').value = text; };
+  chips.appendChild(b);
+}
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const TITLE = {
+  en: { red:'Very likely a scam', amber:'Be careful: warning signs found', green:'No warning signs found', why:'Why', todo:'What to do', links:'Links inspected', none:'Nothing suspicious in the text or links.' },
+  ar: { red:'احتيال على الأغلب', amber:'احذر: وُجدت علامات تحذير', green:'لم نجد علامات تحذير', why:'السبب', todo:'ماذا تفعل', links:'الروابط التي فُحصت', none:'لا شيء مريب في النص أو الروابط.' },
+};
+const ICON = { red:'🔴', amber:'🟠', green:'🟢' };
+
+function render(r, uiLang) {
+  const T = TITLE[uiLang] || TITLE.en;
+  const dir = uiLang === 'ar' ? 'rtl' : 'ltr';
+  const why = r.signals.length ? r.signals.map((s) => `<li>${esc(s[uiLang] || s.en)} <span class="w">(+${s.weight})</span></li>`).join('') : `<li>${T.none}</li>`;
+  // "what to do" is the tail of the bot's own reply, so the page shows exactly what a chat user would get
+  const todo = (r.reply.split('\n\n').pop() || '').split('\n').filter((l) => l.startsWith('• ')).map((l) => `<li>${esc(l.slice(2))}</li>`).join('');
+  const llm = r.llm && r.llm.explanation ? `<h3>🤖</h3><p>${esc(r.llm.explanation)}</p>` : '';
+  const links = (r.inspected || []).length
+    ? `<h3>${T.links}</h3><div class="links">` + r.inspected.map((i) => `<div><code>${esc(i.url)}</code> · ${i.hops} redirect(s) · age: ${i.ageDays === null ? 'unknown' : i.ageDays + ' d'}${i.blocklisted ? ' · <b>on phishing blocklist</b>' : ''}${i.error ? ' · ' + esc(i.error) : ''}</div>`).join('') + '</div>' : '';
+  return `<div dir="${dir}"><div class="verdict ${r.verdict}"><h2>${ICON[r.verdict]} ${T[r.verdict]} <span class="score">${r.score}/100</span></h2></div>
+    <h3>${T.why}</h3><ul>${why}</ul>${llm}<h3>${T.todo}</h3><ul>${todo}</ul>${links}</div>`;
+}
+
+const go = document.getElementById('go');
+go.onclick = async () => {
+  const text = document.getElementById('msg').value.trim();
+  const out = document.getElementById('out');
+  if (!text) { out.innerHTML = ''; return; }
+  go.disabled = true; go.textContent = 'Checking…';
+  try {
+    const res = await fetch(ENDPOINT, { method:'POST', headers:{ 'content-type':'application/json' }, body: JSON.stringify({ chatId:'try-page', text }) });
+    if (!res.ok) throw new Error(`The workflow answered ${res.status}. Is it published?`);
+    const r = await res.json();
+    if (!r.verdict) { out.innerHTML = `<div class="verdict green"><h2>${esc(r.reply || 'Done')}</h2></div>`; return; }
+    out.innerHTML = render(r, document.getElementById('lang').value || r.lang || 'en');
+  } catch (e) {
+    out.innerHTML = `<div class="err">Could not reach the workflow at <code>${esc(ENDPOINT)}</code>.<br>${esc(e.message)}<br>Start it with <code>npm start</code> in the hadhar folder.</div>`;
+  } finally { go.disabled = false; go.textContent = 'Check it'; }
+};
+</script>
+</body>
+</html>

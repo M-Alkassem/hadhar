@@ -1,0 +1,8 @@
+node_modules/
+.n8n-runtime/
+.n8n-local/
+eval/cache/
+*.log
+.DS_Store
+.n8n-demo.log
+.claude/

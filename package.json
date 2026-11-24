@@ -1,0 +1,20 @@
+{
+  "name": "hadhar",
+  "version": "0.1.0",
+  "description": "Forward any suspicious message or link, get a verdict in seconds. An n8n workflow with a tested, explainable scam-detection engine and family alerts.",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "build": "node scripts/build-workflow.mjs",
+    "eval": "node eval/run-eval.mjs",
+    "setup": "mkdir -p .n8n-runtime && cd .n8n-runtime && (test -f package.json || echo '{\"name\":\"n8n-runtime\",\"private\":true}' > package.json) && npm install n8n@2.49.5 --no-audit --no-fund",
+    "start": "scripts/run-n8n.sh",
+    "e2e": "node scripts/e2e-run.mjs all",
+    "build:test": "npm run build && npm test"
+  }
+}

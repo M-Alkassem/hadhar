@@ -1,0 +1,81 @@
+{
+  "split": "test",
+  "generatedAt": "2026-11-24T20:14:03.379Z",
+  "sets": {
+    "hand": {
+      "groups": {
+        "all": {
+          "n": 64,
+          "scam": 32,
+          "benign": 32,
+          "scamFlagged": 32,
+          "scamRed": 26,
+          "benignFlagged": 0,
+          "benignRed": 0
+        },
+        "en": {
+          "n": 32,
+          "scam": 16,
+          "benign": 16,
+          "scamFlagged": 16,
+          "scamRed": 14,
+          "benignFlagged": 0,
+          "benignRed": 0
+        },
+        "ar": {
+          "n": 32,
+          "scam": 16,
+          "benign": 16,
+          "scamFlagged": 16,
+          "scamRed": 12,
+          "benignFlagged": 0,
+          "benignRed": 0
+        }
+      }
+    },
+    "sms": {
+      "groups": {
+        "all": {
+          "n": 300,
+          "scam": 150,
+          "benign": 150,
+          "scamFlagged": 107,
+          "scamRed": 37,
+          "benignFlagged": 1,
+          "benignRed": 0
+        }
+      }
+    },
+    "urls": {
+      "groups": {
+        "all": {
+          "n": 151,
+          "scam": 75,
+          "benign": 76,
+          "scamFlagged": 53,
+          "scamRed": 15,
+          "benignFlagged": 2,
+          "benignRed": 2
+        },
+        "vs top-1k": {
+          "n": 113,
+          "scam": 75,
+          "benign": 38,
+          "scamFlagged": 53,
+          "scamRed": 15,
+          "benignFlagged": 2,
+          "benignRed": 2
+        },
+        "vs 50k-100k": {
+          "n": 113,
+          "scam": 75,
+          "benign": 38,
+          "scamFlagged": 53,
+          "scamRed": 15,
+          "benignFlagged": 0,
+          "benignRed": 0
+        }
+      }
+    }
+  }
+}
